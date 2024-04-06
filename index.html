@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      
+      #note {
+        width: 100%;
+      }
+      
+      b {
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <input id="note" placeholder="Enter note and hit enter"/>
+    <ul id="notes"></ul>
+    <p><a id="saveNotes" href="#">Save Notes</a></p>
+    <p><a id="clearNotes" href="#">Clear Notes</a></p>
+  
+    <script>
+      // Initialize noteList from localStorage or empty array
+      var noteList = localStorage.getItem('noteList') ? JSON.parse(localStorage.getItem('noteList')) : [];
+      var note = document.getElementById("note");
+      var notes = document.getElementById("notes");
+  
+      // Update noteList whenever a new note is added
+      updateNoteList();
+  
+      // Event listener for adding a new note when Enter key is pressed
+      note.addEventListener("keydown", function(event) {
+        if (event.keyCode === 13) {
+          var inputValue = event.target.value.trim();
+          if (inputValue !== '') {
+            noteList.push({ time: Date.now() / 1000, text: inputValue });
+            event.target.value = ''; // Clear the input field
+            event.target.focus(); // Re-focus the input field
+            updateNoteList(); // Update noteList in localStorage
+          }
+        }
+      });
+  
+      // Event listener for downloading notes
+      document.getElementById("saveNotes").addEventListener("click", function(e) {
+        e.preventDefault();
+        downloadNotes();
+      });
+  
+      // Event listener for clearing notes
+      document.getElementById("clearNotes").addEventListener("click", function(e) {
+        if (confirm("Are you sure you want to clear the notes?")) {
+          e.preventDefault();
+          clearNoteList();
+        }
+      });
+  
+      // Function to download notes as JSON file
+      function downloadNotes() {
+        var jsonString = JSON.stringify(noteList, null, 2); // Convert noteList to JSON string with pretty formatting
+        var blob = new Blob([jsonString], { type: "application/json" }); // Create a Blob with the JSON string
+        var url = URL.createObjectURL(blob); // Create a temporary URL for the Blob
+        var link = document.createElement("a"); // Create a link element
+        link.href = url;
+        link.download = `notes-${Math.floor(Date.now() / 1000)}.json`; // Set filename
+        document.body.appendChild(link); // Append the link to the body
+        link.click(); // Programmatically click the link to trigger the download
+        document.body.removeChild(link); // Remove the link from the body
+      }
+  
+      // Function to encode HTML entities
+      function htmlEncode(text) {
+        var element = document.createElement("div");
+        element.innerText = text;
+        return element.innerHTML;
+      }
+  
+      // Function to update the note list displayed on the page
+      function updateNoteList() {
+        localStorage.setItem('noteList', JSON.stringify(noteList)); // Update noteList in localStorage
+        notes.innerHTML = '';
+        for (var i = noteList.length - 1; i >= 0; i--) {
+          var element = document.createElement("li");
+          element.innerHTML = `<b>${noteList[i].time}</b> ${htmlEncode(noteList[i].text)}`;
+          notes.appendChild(element);
+        }
+      }
+  
+      // Function to clear noteList and localStorage
+      function clearNoteList() {
+        noteList = [];
+        localStorage.removeItem('noteList');
+        updateNoteList();
+        console.log("noteList cleared.");
+      }
+    </script>
+  </body>
+</html>
